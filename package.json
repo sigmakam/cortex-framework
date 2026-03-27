@@ -1,0 +1,42 @@
+{
+  "name": "cortex",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI-First Web Framework",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio",
+    "seed": "tsx scripts/seed.ts",
+    "mcp": "tsx scripts/mcp-stdio.ts",
+    "theme:generate": "tsx scripts/generate-theme.ts generate",
+    "theme:activate": "tsx scripts/generate-theme.ts activate",
+    "theme:list": "tsx scripts/generate-theme.ts list"
+  },
+  "dependencies": {
+    "next": "^15.3.2",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "drizzle-orm": "^0.44.2",
+    "postgres": "^3.4.7",
+    "zod": "^3.24.4",
+    "uuid": "^11.1.0",
+    "commander": "^13.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.3",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "@types/uuid": "^10.0.0",
+    "typescript": "^5.8.3",
+    "drizzle-kit": "^0.31.1",
+    "@tailwindcss/postcss": "^4.1.4",
+    "tailwindcss": "^4.1.4",
+    "tsx": "^4.19.4",
+    "postcss": "^8.5.3"
+  }
+}
