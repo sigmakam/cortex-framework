@@ -4,7 +4,7 @@
 - **Status:** Approved
 - **Author:** Krzysztof Moor + Claude
 - **Created:** 2026-03-27
-- **Version:** 1.0
+- **Version:** 1.1
 - **Approach:** Monorepo, Next.js 15 App Router + custom module discovery
 
 ---
@@ -18,6 +18,7 @@ Cortex is an AI-first web framework that treats AI agents as first-class citizen
 3. **GTM data layer** — Every module event automatically pushes to `window.dataLayer` for Google Tag Manager.
 
 A working **blog module** proves all three systems work together.
+4. **Theme system + AI generator** — Professional default theme with AI-powered theme generation from plain-text layout descriptions. Clone → describe → professional website in <30 minutes.
 
 ---
 
@@ -41,6 +42,8 @@ cortex/
 │   │   ├── event-bus.ts          # Domain event pub/sub
 │   │   ├── mcp-server.ts         # MCP server (HTTP + stdio)
 │   │   ├── data-layer.ts         # GTM dataLayer bridge (server-side config)
+│   │   ├── theme-registry.ts     # Theme discovery and management
+│   │   ├── theme-types.ts        # Theme interfaces
 │   │   └── types.ts              # Core interfaces
 │   │
 │   ├── app/                      # Next.js App Router
@@ -83,11 +86,32 @@ cortex/
 │       └── mcp-tools.ts          # Custom MCP tools (publish, search)
 │
 ├── plugins/                      # Third-party extensions (empty for MVP)
-├── themes/                       # Theme system (empty for MVP)
+│
+├── themes/                       # Auto-discovered themes
+│   └── default/                  # Professional default theme
+│       ├── theme.json            # Design tokens
+│       ├── components/
+│       │   ├── Button.tsx
+│       │   ├── Card.tsx
+│       │   ├── Header.tsx
+│       │   ├── Footer.tsx
+│       │   ├── Hero.tsx
+│       │   ├── Section.tsx
+│       │   └── Container.tsx
+│       ├── layouts/
+│       │   ├── BaseLayout.tsx
+│       │   ├── LandingLayout.tsx
+│       │   └── BlogLayout.tsx
+│       └── styles/
+│           └── theme.css
 │
 ├── scripts/
 │   ├── mcp-stdio.ts              # stdio MCP entry point for CLI agents
+│   ├── generate-theme.ts         # AI theme generator CLI
 │   └── seed.ts                   # Database seed script
+│
+├── .cortex/
+│   └── layout-instructions.example.md  # Layout description examples
 │
 └── .ai/
     └── specs/                    # Spec-first development folder
@@ -493,6 +517,9 @@ REDIS_URL=redis://localhost:6379
 # GTM (optional — no ID = no GTM script)
 NEXT_PUBLIC_GTM_ID=
 
+# AI Theme Generation (optional — no key = copy default theme without AI customization)
+ANTHROPIC_API_KEY=
+
 # App
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 NODE_ENV=development
@@ -500,7 +527,161 @@ NODE_ENV=development
 
 ---
 
-## 8. What's Scaffolded But Not Implemented
+## 8. Theme System
+
+### Overview
+
+The theme system is what makes Cortex deliver on the "WordPress for AI era" promise. Users describe their website in plain English, AI generates a complete professional theme.
+
+**User journey:** Clone repo → write layout description → `npm run theme:generate` → `npm run dev` → professional website in <30 minutes.
+
+### Architecture
+
+```
+src/core/
+├── theme-registry.ts      # Theme discovery (scans /themes like /modules)
+└── theme-types.ts          # ThemeConfig, Theme, LayoutInstructions interfaces
+
+themes/
+├── default/                # Professional default theme (Tailwind UI quality)
+│   ├── theme.json          # Design tokens (colors, typography, spacing, shadows)
+│   ├── components/
+│   │   ├── Button.tsx      # Primary, Secondary, Outline, Ghost variants
+│   │   ├── Card.tsx        # Elevation shadows, hover effects
+│   │   ├── Header.tsx      # Fixed/static, logo left/center, nav horizontal
+│   │   ├── Footer.tsx      # 1-4 columns, social icons, newsletter
+│   │   ├── Hero.tsx        # Full/half-screen, split layout, CTA
+│   │   ├── Section.tsx     # Background variants, spacing
+│   │   └── Container.tsx   # Max-width, responsive padding
+│   ├── layouts/
+│   │   ├── BaseLayout.tsx
+│   │   ├── LandingLayout.tsx
+│   │   └── BlogLayout.tsx
+│   └── styles/
+│       └── theme.css       # CSS variables, animations, utilities
+│
+scripts/
+├── generate-theme.ts       # CLI: npm run theme:generate
+└── quickstart.ts           # Interactive wizard (bonus)
+
+.cortex/
+└── layout-instructions.example.md  # 3+ clear examples
+```
+
+### ThemeRegistry
+
+Mirrors ModuleRegistry pattern:
+
+1. Scans `/themes` directory on boot
+2. Reads `theme.json` from each subdirectory
+3. Loads components and layouts
+4. Tracks active theme (from DB/config)
+5. Provides `getComponent(name)` and `getLayout(name)` with fallback to default theme
+
+### ThemeConfig (theme.json)
+
+```json
+{
+  "id": "cortex-default",
+  "name": "Cortex Default",
+  "version": "1.0.0",
+  "description": "Professional default theme",
+  "tokens": {
+    "colors": {
+      "primary": "#0066FF",
+      "secondary": "#6366F1",
+      "accent": "#F59E0B",
+      "background": "#FFFFFF",
+      "text": "#1F2937",
+      "muted": "#6B7280"
+    },
+    "typography": {
+      "fontFamily": {
+        "sans": "Inter, -apple-system, BlinkMacSystemFont, sans-serif",
+        "mono": "'JetBrains Mono', 'Fira Code', monospace"
+      },
+      "fontSize": { "xs": "0.75rem", "sm": "0.875rem", "base": "1rem", "lg": "1.125rem", "xl": "1.25rem", "2xl": "1.5rem", "3xl": "1.875rem", "4xl": "2.25rem" }
+    },
+    "spacing": { "xs": "0.5rem", "sm": "1rem", "md": "1.5rem", "lg": "2rem", "xl": "3rem", "2xl": "4rem" },
+    "borderRadius": { "none": "0", "sm": "0.25rem", "md": "0.5rem", "lg": "1rem", "full": "9999px" },
+    "shadows": { "sm": "0 1px 2px 0 rgb(0 0 0 / 0.05)", "md": "0 4px 6px -1px rgb(0 0 0 / 0.1)", "lg": "0 10px 15px -3px rgb(0 0 0 / 0.1)" }
+  },
+  "components": {
+    "Button": "./components/Button.tsx",
+    "Card": "./components/Card.tsx",
+    "Header": "./components/Header.tsx",
+    "Footer": "./components/Footer.tsx",
+    "Hero": "./components/Hero.tsx",
+    "Section": "./components/Section.tsx",
+    "Container": "./components/Container.tsx"
+  },
+  "layouts": {
+    "default": "./layouts/BaseLayout.tsx",
+    "landing": "./layouts/LandingLayout.tsx",
+    "blog": "./layouts/BlogLayout.tsx"
+  }
+}
+```
+
+### Default Theme Quality Requirements
+
+- **Reference level:** Tailwind UI, shadcn/ui, Vercel templates
+- **Responsive:** Mobile-first with tablet/desktop breakpoints
+- **Accessible:** ARIA labels, keyboard navigation, focus states
+- **Polished:** Hover effects, transitions, loading states
+- **Consistent:** All styling via CSS variables from design tokens
+- **Modern:** Tailwind CSS, TypeScript strict, clean code
+
+### AI Theme Generator
+
+**MCP tool:** `generate_theme_from_description`
+
+1. User provides plain-text layout description
+2. Claude API parses description into structured `LayoutInstructions` (header style, hero type, sections, footer, design tokens)
+3. Copies default theme as base
+4. Customizes `theme.json` with parsed design tokens
+5. Customizes components based on layout instructions
+6. Generates layouts matching described structure
+7. Writes complete theme to `/themes/{name}`
+
+**CLI wrapper:**
+```bash
+npm run theme:generate -- --file .cortex/my-layout.md --name my-site
+npm run theme:activate my-site
+```
+
+**Fallback:** If no `ANTHROPIC_API_KEY`, copies default theme without AI customization.
+
+### Integration with Next.js
+
+- Root `layout.tsx` wraps children in `<ThemeProvider>`
+- ThemeProvider injects CSS variables from active theme's tokens
+- Pages use `getComponent()` and `getLayout()` from theme registry
+- Theme components override core components when same name exists
+
+### LayoutInstructions (parsed from description)
+
+```ts
+interface LayoutInstructions {
+  structure: {
+    header: { style: 'fixed' | 'static' | 'transparent'; logo: 'left' | 'center'; navigation: 'horizontal' | 'vertical' };
+    hero?: { type: 'full-screen' | 'half-screen' | 'banner'; content: 'left' | 'center' | 'right'; background: 'color' | 'image' | 'gradient' };
+    sections: Array<{ type: 'features' | 'testimonials' | 'cta' | 'content' | 'gallery'; layout: '1-col' | '2-col' | '3-col' | 'grid' }>;
+    footer: { columns: 1 | 2 | 3 | 4; social: boolean; newsletter: boolean };
+  };
+  design: {
+    colorScheme: 'light' | 'dark' | 'auto';
+    primaryColor?: string;
+    font?: string;
+    spacing: 'compact' | 'comfortable' | 'spacious';
+    corners: 'sharp' | 'rounded' | 'pill';
+  };
+}
+```
+
+---
+
+## 9. What's Scaffolded But Not Implemented
 
 These exist as directories, interfaces, or TODO comments — ready for future development:
 
@@ -520,13 +701,32 @@ These exist as directories, interfaces, or TODO comments — ready for future de
 
 The MVP is done when:
 
+### Core Framework
 1. `docker compose up -d` starts PostgreSQL and Redis
-2. `npm run dev` starts Next.js with module discovery
+2. `npm run dev` starts Next.js with module and theme discovery
 3. Blog module is auto-discovered — posts and comments tables created
 4. All blog CRUD API endpoints work at `/api/modules/blog/posts`
+
+### MCP Server
 5. MCP server works via both HTTP (`/api/mcp`) and stdio (`scripts/mcp-stdio.ts`)
 6. AI agent (Claude Code) can discover schemas, list modules, create/read/update/delete posts through MCP
-7. `window.dataLayer` receives events when posts are created/published/viewed
-8. GTM script loads when `NEXT_PUBLIC_GTM_ID` is set
-9. Blog frontend pages render posts with SSR
-10. `AGENTS.md` exists at root and in blog module
+7. `generate_theme_from_description` MCP tool works
+
+### GTM Data Layer
+8. `window.dataLayer` receives events when posts are created/published/viewed
+9. GTM script loads when `NEXT_PUBLIC_GTM_ID` is set
+
+### Theme System (CRITICAL)
+10. Default theme loads with professional Tailwind UI-quality components (7+ components, 3 layouts)
+11. `npm run theme:generate -- --file .cortex/my-layout.md --name test` generates a complete theme
+12. `npm run theme:activate test` switches the active theme
+13. Homepage renders with active theme's layout and components
+14. Blog frontend pages render posts using theme components
+
+### Documentation
+15. `AGENTS.md` exists at root and in blog module
+16. `.cortex/layout-instructions.example.md` with 3+ clear examples
+17. README with Quick Start: clone → describe → generate → run in <30 minutes
+
+### The Ultimate Test
+A non-technical user can clone the repo and have a professional-looking website running in <30 minutes.
