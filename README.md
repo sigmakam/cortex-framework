@@ -1,8 +1,9 @@
 # Cortex
 
-**AI-First Web Framework** -- Build applications where AI agents are first-class citizens.
+**AI-First Web Framework** -- Let AI agents build ai-aware websites where AI agents are first-class citizens.
 
-Cortex is a Next.js-based framework that uses the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) to give AI agents structured, discoverable access to every module, entity, API endpoint, and event in your application.
+
+Cortex is a Next.js-based framework that uses the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) to give AI agents structured, discoverable access to every module, entity, API endpoint, and event in your application. Build faster on well-thought-out architecture where AI agents do the job.
 
 ## Quick Start
 
