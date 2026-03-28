@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { moduleRegistry } from "@/core/module-registry";
+import { ensureInitialized } from "@/core/init";
 
 async function handleRequest(
   request: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
 ): Promise<NextResponse> {
+  await ensureInitialized();
   const start = Date.now();
 
   const { path: pathSegments } = await params;

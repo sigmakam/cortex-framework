@@ -1,5 +1,6 @@
 import { moduleRegistry } from "@/core/module-registry";
 import { themeRegistry } from "@/core/theme-registry";
+import { ensureInitialized } from "@/core/init";
 import { db } from "@/lib/db";
 import { posts } from "@modules/blog/entities/post";
 import { events } from "@/lib/schema";
@@ -14,6 +15,7 @@ export const metadata = {
 };
 
 export default async function AdminDashboardPage() {
+  await ensureInitialized();
   const allModules = moduleRegistry.getAll();
   const allThemes = themeRegistry.getAll();
 

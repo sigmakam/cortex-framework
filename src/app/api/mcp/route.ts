@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { createMcpServer } from "@/core/mcp-server";
 import { moduleRegistry } from "@/core/module-registry";
+import { ensureInitialized } from "@/core/init";
 
 /**
  * MCP HTTP endpoint for AI agents.
@@ -22,8 +23,7 @@ let mcpServer: ReturnType<typeof createMcpServer> | null = null;
 
 async function getServer() {
   if (!mcpServer) {
-    // Ensure modules are discovered before building tools
-    await moduleRegistry.discoverModules();
+    await ensureInitialized();
     mcpServer = createMcpServer();
   }
   return mcpServer;

@@ -2,8 +2,10 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 import { moduleRegistry } from "@/core/module-registry";
+import { ensureInitialized } from "@/core/init";
 
 export async function GET() {
+  await ensureInitialized();
   const checks: Record<string, { status: string; latency?: string }> = {};
 
   try {
