@@ -1,4 +1,5 @@
 import type { ThemeConfig, Theme } from "./theme-types";
+import { themeTokensToCSS } from "./theme-tokens-css";
 
 class ThemeRegistryImpl {
   private themes: Map<string, Theme> = new Map();
@@ -45,48 +46,7 @@ class ThemeRegistryImpl {
   getTokensAsCSS(theme?: Theme): string {
     const target = theme ?? this.getActive();
     if (!target) return "";
-
-    const tokens = target.config.tokens;
-    const lines: string[] = [":root {"];
-
-    if (tokens.colors) {
-      for (const [key, value] of Object.entries(tokens.colors)) {
-        lines.push(`  --color-${key}: ${value};`);
-      }
-    }
-
-    if (tokens.typography?.fontFamily) {
-      for (const [key, value] of Object.entries(tokens.typography.fontFamily)) {
-        if (value) lines.push(`  --font-${key}: ${value};`);
-      }
-    }
-
-    if (tokens.typography?.fontSize) {
-      for (const [key, value] of Object.entries(tokens.typography.fontSize)) {
-        lines.push(`  --text-${key}: ${value};`);
-      }
-    }
-
-    if (tokens.spacing) {
-      for (const [key, value] of Object.entries(tokens.spacing)) {
-        lines.push(`  --spacing-${key}: ${value};`);
-      }
-    }
-
-    if (tokens.borderRadius) {
-      for (const [key, value] of Object.entries(tokens.borderRadius)) {
-        lines.push(`  --radius-${key}: ${value};`);
-      }
-    }
-
-    if (tokens.shadows) {
-      for (const [key, value] of Object.entries(tokens.shadows)) {
-        lines.push(`  --shadow-${key}: ${value};`);
-      }
-    }
-
-    lines.push("}");
-    return lines.join("\n");
+    return themeTokensToCSS(target.config.tokens);
   }
 }
 
